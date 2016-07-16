@@ -13,7 +13,7 @@
     <ProjectGuid>{B42BE820-659A-438E-BBC3-BC758E5A5E07}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Smooth_Scrolling</RootNamespace>
+    <RootNamespace>SmoothScrolling</RootNamespace>
     <AssemblyName>Smooth Scrolling</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <GeneratePkgDefFile>false</GeneratePkgDefFile>
@@ -44,6 +44,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SmoothScrollMouseProcessorProvider.cs" />
     <Compile Include="SmoothScrollMouseProcessor.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="source.extension.vsixmanifest">

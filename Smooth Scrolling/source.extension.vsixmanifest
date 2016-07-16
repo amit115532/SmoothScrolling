@@ -2,7 +2,7 @@
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
     <Identity Id="Smooth_Scrolling.Amit Ozalvo.eaf8b070-66ab-4c4e-b864-11d7557effd4" Version="1.0" Language="en-US" Publisher="Amit Ozalvo" />
-    <DisplayName>Smooth_Scrolling</DisplayName>
+    <DisplayName>Smooth Scrolling</DisplayName>
     <Description xml:space="preserve">Instead of scrolling the text editor 1 line each scroll, it will smoothly scroll it using the scroll wheel</Description>
   </Metadata>
   <Installation>
