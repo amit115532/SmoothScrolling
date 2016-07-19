@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.Text.Editor;
+using SmoothScrolling;
 using System;
 using System.Threading;
 using System.Windows.Input;
@@ -17,37 +18,6 @@ namespace SmoothScrollingExtension
         /// </summary>
         private readonly object locker = new object();
 
-        /// <summary>
-        /// How fast will the smooth scroll decelerate
-        /// </summary>
-        public double DecelerationSpeed { get; set; }
-
-        /// <summary>
-        /// The intensity of the scrolling.
-        /// Bigger value means faster scrolling (not smoother)
-        /// </summary>
-        public double ScrollIntensity { get; set; }
-
-        /// <summary>
-        /// Scrolling value below this will not be considered
-        /// </summary>
-        public double MinimumScrollValue { get; set; }
-
-        /// <summary>
-        /// When interrupting, the scrolling speed will be reset to this value
-        /// </summary>
-        public double InterruptionValue { get; set; }
-
-        /// <summary>
-        /// Should we interrupt the scrolling if the user scrolling in a
-        /// different direction?
-        /// </summary>
-        public bool InterruptScrollingWhenInDifferentDirection { get; set; }
-
-        /// <summary>
-        /// How much time between engine updates (in miliseconds)
-        /// </summary>
-        public int UpdateMs { get; set; }
         /// <summary>
         /// Used for scrolling the text editor
         /// </summary>
@@ -73,18 +43,16 @@ namespace SmoothScrollingExtension
         private readonly Dispatcher providerThreadDispatcher;
 
         /// <summary>
+        /// The options
+        /// </summary>
+        private OptionPageGrid options;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SmoothScrollMouseProcessor"/> class.
         /// </summary>
         /// <param name="wpfTextView">The WPF text view.</param>
         internal SmoothScrollMouseProcessor(IWpfTextView wpfTextView)
         {
-            DecelerationSpeed = 10;
-            ScrollIntensity = 0.05;
-            MinimumScrollValue = 0.01;
-            InterruptScrollingWhenInDifferentDirection = true;
-            UpdateMs = 10;
-            InterruptionValue = 1;
-
             providerThreadDispatcher = Dispatcher.CurrentDispatcher;
             this.wpfTextView = wpfTextView;
             var thread = new Thread(Engine);
@@ -106,17 +74,20 @@ namespace SmoothScrollingExtension
         /// </summary>
         public void Update()
         {
+            if (!options.Enabled)
+                return;
+
             double dist;
             lock (locker)
             {
-                currentScrollDistance = Utils.Lerp(currentScrollDistance, 0, deltaTime * DecelerationSpeed);
+                currentScrollDistance = Utils.Lerp(currentScrollDistance, 0, deltaTime * options.DecelerationSpeed);
                 dist = currentScrollDistance;
             }
 
-            var isScrollingValueTooLow = Math.Abs(dist) < MinimumScrollValue;
+            var isScrollingValueTooLow = Math.Abs(dist) < options.MinimumScrollValue;
             if (!isScrollingValueTooLow)
             {
-                providerThreadDispatcher.Invoke(() => Scroll(dist));
+                providerThreadDispatcher.Invoke(() => Scroll(dist * deltaTime));
             }
             else
             {
@@ -129,11 +100,13 @@ namespace SmoothScrollingExtension
         /// </summary>
         private void Engine()
         {
+            FetchOptions();
+
             time = Utils.GetCurrentTime();
 
             while (true)
             {
-                Thread.Sleep(UpdateMs);
+                Thread.Sleep(options.UpdateMs);
                 var currentTime = Utils.GetCurrentTime();
                 deltaTime = currentTime - time;
                 time = currentTime;
@@ -142,15 +115,36 @@ namespace SmoothScrollingExtension
         }
 
         /// <summary>
+        /// Fetches the options, this module might be loading up before the package...
+        /// so this function waits until the package has been loaded and fetches the options from it
+        /// </summary>
+        private void FetchOptions()
+        {
+            SmoothScrollingPackage package = null;
+            while (package == null)
+            {
+                package = SmoothScrollingPackage.Package;
+            }
+
+            options = package.GetOptions();
+        }
+
+        /// <summary>
         /// Handles the mouse wheel event before the default handler.
         /// </summary>
         /// <param name="e">The <see cref="T:System.Windows.Input.MouseWheelEventArgs" /> event arguments.</param>
         public override void PreprocessMouseWheel(MouseWheelEventArgs e)
         {
+            if (options == null)
+                return;
+
+            if (!options.Enabled)
+                return;
+
             var delta = e.Delta;
             lock (locker)
             {
-                if (InterruptScrollingWhenInDifferentDirection && ShouldInterrupt(delta))
+                if (options.InterruptScrollingWhenInDifferentDirection && ShouldInterrupt(delta))
                 {
                     InterruptScrolling();
                 }
@@ -168,21 +162,13 @@ namespace SmoothScrollingExtension
         /// </summary>
         private bool ShouldInterrupt(int delta)
         {
-            if (currentScrollDistance != 0)
+            if (Math.Abs(currentScrollDistance) < options.MinimumScrollValue)
             {
-                var shouldInterrupt = delta * currentScrollDistance <= 0;
-                if (shouldInterrupt)
-                {
-                    if (currentScrollDistance > 0)
-                        shouldInterrupt = currentScrollDistance > InterruptionValue;
-                    else
-                        shouldInterrupt = currentScrollDistance < -InterruptionValue;
-
-                    return shouldInterrupt;
-                }
+                return false;
             }
 
-            return false;
+            var isDifferentSide = delta * currentScrollDistance < 0;
+            return isDifferentSide;
         }
 
         /// <summary>
@@ -190,14 +176,7 @@ namespace SmoothScrollingExtension
         /// </summary>
         private void InterruptScrolling()
         {
-            if (currentScrollDistance > 0)
-            {
-                currentScrollDistance = Math.Min(InterruptionValue, currentScrollDistance);
-            }
-            else
-            {
-                currentScrollDistance = Math.Max(-InterruptionValue, currentScrollDistance);
-            }
+            currentScrollDistance = 0;
         }
 
         /// <summary>
@@ -206,7 +185,7 @@ namespace SmoothScrollingExtension
         /// <param name="delta">The delta from the mouse scrollwheel</param>
         private void AddScrollingDistance(int delta)
         {
-            var scrollAdd = delta * ScrollIntensity;
+            var scrollAdd = delta * options.ScrollIntensity;
             currentScrollDistance += scrollAdd;
         }
     }
