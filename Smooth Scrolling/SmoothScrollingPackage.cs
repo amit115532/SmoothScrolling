@@ -6,11 +6,9 @@
 
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using Microsoft.VisualStudio.OLE.Interop;
 
 namespace SmoothScrolling
 {
@@ -83,6 +81,8 @@ namespace SmoothScrolling
         private double scrollIntensity = 4;
         private double decelerationSpeed = 6;
         private double minimumScrollValue = 0.1;
+        private bool pauseWhenPressingShift = true;
+        private bool pauseWhenPressingCtrl = true;
         private bool interruptScrollingWhenInDifferentDirection = true;
         private int updateMs = 5;
         private bool enabled = true;
@@ -143,6 +143,24 @@ namespace SmoothScrolling
         {
             get { return interruptScrollingWhenInDifferentDirection; }
             set { interruptScrollingWhenInDifferentDirection = value; }
+        }
+
+        [Category("Smooth Scrolling")]
+        [DisplayName("Shift Pause")]
+        [Description("Should we pause smooth scrolling if the user holds shift key?")]
+        public bool PauseWhenPressingShift
+        {
+            get { return pauseWhenPressingShift; }
+            set { pauseWhenPressingShift = value; }
+        }
+
+        [Category("Smooth Scrolling")]
+        [DisplayName("Ctrl Pause")]
+        [Description("Should we pause smooth scrolling if the user holds ctrl key?")]
+        public bool PauseWhenPressingCtrl
+        {
+            get { return pauseWhenPressingCtrl; }
+            set { pauseWhenPressingCtrl = value; }
         }
 
         [Category("Smooth Scrolling")]
