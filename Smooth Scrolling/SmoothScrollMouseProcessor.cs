@@ -141,6 +141,14 @@ namespace SmoothScrollingExtension
             if (!options.Enabled)
                 return;
 
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) || 
+                Keyboard.IsKeyDown(Key.RightCtrl) || 
+                Keyboard.IsKeyDown(Key.LeftShift) || 
+                Keyboard.IsKeyDown(Key.RightShift))
+            {
+                return;
+            }
+
             var delta = e.Delta;
             lock (locker)
             {
