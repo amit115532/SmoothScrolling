@@ -141,6 +141,8 @@ namespace SmoothScrollingExtension
             if (!options.Enabled)
                 return;
 
+            var intensity = options.ScrollIntensity;
+
             if (options.PauseWhenPressingCtrl)
             {
                 if (Keyboard.IsKeyDown(Key.LeftCtrl) ||
@@ -149,12 +151,12 @@ namespace SmoothScrollingExtension
                     return;
                 }
             }
-            if (options.PauseWhenPressingShift)
+            if (options.UseShiftForPageScrolling)
             {
                 if (Keyboard.IsKeyDown(Key.LeftShift) ||
                     Keyboard.IsKeyDown(Key.RightShift))
                 {
-                    return;
+                    intensity = options.ShiftScrollIntensity;
                 }
             }
 
@@ -167,7 +169,7 @@ namespace SmoothScrollingExtension
                 }
                 else
                 {
-                    AddScrollingDistance(delta);
+                    AddScrollingDistance(delta, intensity);
                 }
             }
 
@@ -200,9 +202,9 @@ namespace SmoothScrollingExtension
         /// Adds the delta from the mouse scrollwheel
         /// </summary>
         /// <param name="delta">The delta from the mouse scrollwheel</param>
-        private void AddScrollingDistance(int delta)
+        private void AddScrollingDistance(int delta, double intensity)
         {
-            var scrollAdd = delta * options.ScrollIntensity;
+            var scrollAdd = delta * intensity;
             currentScrollDistance += scrollAdd;
         }
     }
