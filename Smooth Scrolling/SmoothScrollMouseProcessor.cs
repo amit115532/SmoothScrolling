@@ -43,11 +43,6 @@ namespace SmoothScrollingExtension
         private readonly Dispatcher providerThreadDispatcher;
 
         /// <summary>
-        /// The options
-        /// </summary>
-        private OptionPageGrid options;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="SmoothScrollMouseProcessor"/> class.
         /// </summary>
         /// <param name="wpfTextView">The WPF text view.</param>
@@ -74,17 +69,17 @@ namespace SmoothScrollingExtension
         /// </summary>
         public void Update()
         {
-            if (!options.Enabled)
+            if (!SmoothScrollingPackage.Options.Enabled)
                 return;
 
             double dist;
             lock (locker)
             {
-                currentScrollDistance = Utils.Lerp(currentScrollDistance, 0, deltaTime * options.DecelerationSpeed);
+                currentScrollDistance = Utils.Lerp(currentScrollDistance, 0, deltaTime * SmoothScrollingPackage.Options.DecelerationSpeed);
                 dist = currentScrollDistance;
             }
 
-            var isScrollingValueTooLow = Math.Abs(dist) < options.MinimumScrollValue;
+            var isScrollingValueTooLow = Math.Abs(dist) < SmoothScrollingPackage.Options.MinimumScrollValue;
             if (!isScrollingValueTooLow)
             {
                 providerThreadDispatcher.Invoke(() => Scroll(dist * deltaTime));
@@ -100,13 +95,11 @@ namespace SmoothScrollingExtension
         /// </summary>
         private void Engine()
         {
-            FetchOptions();
-
             time = Utils.GetCurrentTime();
 
             while (true)
             {
-                Thread.Sleep(options.UpdateMs);
+                Thread.Sleep(SmoothScrollingPackage.Options.UpdateMs);
                 var currentTime = Utils.GetCurrentTime();
                 deltaTime = currentTime - time;
                 time = currentTime;
@@ -115,35 +108,17 @@ namespace SmoothScrollingExtension
         }
 
         /// <summary>
-        /// Fetches the options, this module might be loading up before the package...
-        /// so this function waits until the package has been loaded and fetches the options from it
-        /// </summary>
-        private void FetchOptions()
-        {
-            SmoothScrollingPackage package = null;
-            while (package == null)
-            {
-                package = SmoothScrollingPackage.Package;
-            }
-
-            options = package.GetOptions();
-        }
-
-        /// <summary>
         /// Handles the mouse wheel event before the default handler.
         /// </summary>
         /// <param name="e">The <see cref="T:System.Windows.Input.MouseWheelEventArgs" /> event arguments.</param>
         public override void PreprocessMouseWheel(MouseWheelEventArgs e)
         {
-            if (options == null)
+            if (!SmoothScrollingPackage.Options.Enabled)
                 return;
 
-            if (!options.Enabled)
-                return;
+            var intensity = SmoothScrollingPackage.Options.ScrollIntensity;
 
-            var intensity = options.ScrollIntensity;
-
-            if (options.PauseWhenPressingCtrl)
+            if (SmoothScrollingPackage.Options.PauseWhenPressingCtrl)
             {
                 if (Keyboard.IsKeyDown(Key.LeftCtrl) ||
                     Keyboard.IsKeyDown(Key.RightCtrl))
@@ -151,19 +126,19 @@ namespace SmoothScrollingExtension
                     return;
                 }
             }
-            if (options.UseShiftForPageScrolling)
+            if (SmoothScrollingPackage.Options.UseShiftForPageScrolling)
             {
                 if (Keyboard.IsKeyDown(Key.LeftShift) ||
                     Keyboard.IsKeyDown(Key.RightShift))
                 {
-                    intensity = options.ShiftScrollIntensity;
+                    intensity = SmoothScrollingPackage.Options.ShiftScrollIntensity;
                 }
             }
 
             var delta = e.Delta;
             lock (locker)
             {
-                if (options.InterruptScrollingWhenInDifferentDirection && ShouldInterrupt(delta))
+                if (SmoothScrollingPackage.Options.InterruptScrollingWhenInDifferentDirection && ShouldInterrupt(delta))
                 {
                     InterruptScrolling();
                 }
@@ -181,7 +156,7 @@ namespace SmoothScrollingExtension
         /// </summary>
         private bool ShouldInterrupt(int delta)
         {
-            if (Math.Abs(currentScrollDistance) < options.MinimumScrollValue)
+            if (Math.Abs(currentScrollDistance) < SmoothScrollingPackage.Options.MinimumScrollValue)
             {
                 return false;
             }
